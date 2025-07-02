@@ -134,7 +134,7 @@ export default function PrimalTapChallengePage() {
               <span className="text-2xl md:text-3xl">Time: {timeLeft}s</span>
               <span className="text-2xl md:text-3xl">Score: {score}</span>
             </div>
-            <div className="relative w-full h-96 bg-accent/20 rounded-lg overflow-hidden" ref={gameAreaRef}>
+            <div className="relative w-full bg-accent/20 rounded-lg overflow-hidden flex-grow sm:flex-grow-0 sm:h-96" ref={gameAreaRef}>
               {iconPosition.visible && (
                   <button
                     className="absolute transition-opacity duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
@@ -204,9 +204,9 @@ export default function PrimalTapChallengePage() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-background flex items-center justify-center p-4 font-body">
-      <Card className="w-full max-w-2xl shadow-2xl border-2 border-primary/10 relative overflow-hidden">
-        <CardContent className="p-4 sm:p-6">
+    <main className="min-h-screen w-full bg-background flex items-stretch sm:items-center justify-center p-0 sm:p-4 font-body">
+      <Card className="w-full max-w-2xl shadow-2xl sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg">
+        <CardContent className="p-4 sm:p-6 flex-grow flex flex-col justify-center">
           {renderGameContent()}
         </CardContent>
       </Card>
