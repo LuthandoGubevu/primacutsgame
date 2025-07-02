@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -274,7 +275,12 @@ export default function PrimalTapChallengePage() {
             <h2 className="text-2xl font-bold font-headline text-primary mb-2">Time's Up!</h2>
             <p className="text-6xl font-bold font-headline text-accent-foreground mb-4">{score}</p>
             <p className="text-lg text-foreground/80 mb-6">Your final score</p>
-            <Button variant="outline" onClick={handlePlayAgain} className="mt-8">Play Again</Button>
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <Button variant="outline" onClick={handlePlayAgain}>Play Again</Button>
+                <Link href="/leaderboard" passHref>
+                    <Button>View Leaderboard</Button>
+                </Link>
+            </div>
           </div>
         );
       case 'idle':
@@ -325,6 +331,3 @@ export default function PrimalTapChallengePage() {
     </main>
   );
 }
-
-
-    
