@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -205,7 +206,7 @@ export default function PrimalTapChallengePage() {
 
   return (
     <main className="min-h-screen w-full bg-background flex items-stretch sm:items-center justify-center p-0 sm:p-4 font-body">
-      <Card className="w-full max-w-2xl shadow-2xl sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:h-auto">
+      <Card className="w-full max-w-2xl shadow-2xl sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:h-[600px]">
         <CardContent className="p-4 sm:p-6 flex-grow flex flex-col justify-center">
           {renderGameContent()}
         </CardContent>
