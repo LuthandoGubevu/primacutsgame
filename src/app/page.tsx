@@ -103,7 +103,7 @@ export default function PrimalTapChallengePage() {
   }, [gameState, showNextIcon, stopGame, form]);
 
 
-  const handleIconClick = () => {
+  const handleIconClick = useCallback(() => {
     if (!iconPosition.visible || gameState !== 'playing') return;
     
     setScore(prevScore => prevScore + 1);
@@ -114,11 +114,11 @@ export default function PrimalTapChallengePage() {
     // Immediately try to show the next icon
     if (gameLoopTimeoutRef.current) clearTimeout(gameLoopTimeoutRef.current);
     showNextIcon();
-  };
+  }, [gameState, iconPosition.visible, showNextIcon]);
   
-  const handlePlayAgain = () => {
+  const handlePlayAgain = useCallback(() => {
     setGameState('playing');
-  };
+  }, []);
 
   const onEmailSubmit: SubmitHandler<EmailFormValues> = (data) => {
     console.log('Email submitted:', data.email);
