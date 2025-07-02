@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -6,7 +5,7 @@ import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ChevronsRight, Target } from 'lucide-react';
+import { ChevronsRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
@@ -191,7 +190,7 @@ export default function PrimalTapChallengePage() {
       default:
         return (
           <div className="text-center py-10">
-            <Target className="w-24 h-24 mx-auto text-primary/50 mb-4" />
+            <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={96} height={96} className="mx-auto mb-4" data-ai-hint="logo emblem" />
             <CardTitle className="text-3xl md:text-4xl font-headline text-primary">Primal Cuts Tap Challenge</CardTitle>
             <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
                 Tap the meat sticks as they appear. You have 30 seconds to get the highest score. Ready to test your primal instincts?
