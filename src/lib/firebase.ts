@@ -1,7 +1,8 @@
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+
+import { initializeApp, getApp, getApps, type FirebaseApp } from "firebase/app";
+import { getAnalytics, type Analytics } from "firebase/analytics";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,14 +16,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase for client side
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
-let analytics;
-
-if (typeof window !== 'undefined') {
-  // Initialize Analytics only on the client side
-  analytics = getAnalytics(app);
-}
+const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const analytics: Analytics | null = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export { app, auth, db, analytics };
