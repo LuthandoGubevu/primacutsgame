@@ -190,7 +190,7 @@ export default function PrimalTapChallengePage() {
       default:
         return (
           <div className="text-center py-10">
-            <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={96} height={96} className="mx-auto mb-4" data-ai-hint="logo emblem" />
+            <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={300} height={300} className="mx-auto mb-4" data-ai-hint="logo emblem" />
             <CardTitle className="text-3xl md:text-4xl font-headline text-primary">Primal Cuts Tap Challenge</CardTitle>
             <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
                 Tap the meat sticks as they appear. You have 30 seconds to get the highest score. Ready to test your primal instincts?
