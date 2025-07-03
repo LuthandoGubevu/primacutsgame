@@ -342,7 +342,7 @@ export default function PrimalTapChallengePage() {
                     onClick={handleIconClick}
                     aria-label="Tap target"
                   >
-                    <Image src="/logo.png" alt="Meat Stick" width={80} height={80} className="animate-pulse hover:scale-110 transition-transform" />
+                    <Image src="/PC-Elements-15.png" alt="Primal Cuts target" width={80} height={80} className="animate-pulse hover:scale-110 transition-transform" />
                   </button>
                 )}
             </div>
