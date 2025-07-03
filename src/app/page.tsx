@@ -416,7 +416,7 @@ export default function PrimalTapChallengePage() {
             </div>
             <div>
               <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={300} height={300} className="mx-auto mb-4" data-ai-hint="logo emblem" />
-              <CardTitle className="text-3xl md:text-4xl font-headline text-primary">Primal Cuts Tap Challenge</CardTitle>
+              <CardTitle className="text-2xl md:text-3xl font-headline text-primary">Primal Cuts Tap Challenge</CardTitle>
               <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
                 Welcome back, {userProfile?.firstName}! Tap the meat sticks as they appear. You have 30 seconds.
               </CardDescription>
