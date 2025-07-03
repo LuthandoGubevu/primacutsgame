@@ -397,9 +397,12 @@ export default function PrimalTapChallengePage() {
               <CarouselNext />
             </Carousel>
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <Link href="https://primalcutsusa.com/collections/all" passHref target="_blank" rel="noopener noreferrer">
+                    <Button>Shop Our Biltong</Button>
+                </Link>
                 <Button variant="outline" onClick={handlePlayAgain}>Play Again</Button>
                 <Link href="/leaderboard" passHref>
-                    <Button>View Leaderboard</Button>
+                    <Button variant="outline">View Leaderboard</Button>
                 </Link>
             </div>
           </div>
