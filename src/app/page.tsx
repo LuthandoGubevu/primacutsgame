@@ -19,6 +19,13 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 
 // Schema for the auth form
@@ -368,6 +375,27 @@ export default function PrimalTapChallengePage() {
             <h2 className="text-2xl font-bold font-headline text-primary mb-2">Time's Up!</h2>
             <p className="text-6xl font-bold font-headline text-accent-foreground mb-4">{score}</p>
             <p className="text-lg text-foreground/80 mb-6">Your final score</p>
+            <Carousel className="w-full max-w-xs mx-auto my-6">
+              <CarouselContent>
+                <CarouselItem>
+                  <div className="p-1 flex justify-center">
+                    <Image src="https://placehold.co/200x200.png" alt="Placeholder image 1" width={200} height={200} className="rounded-lg" data-ai-hint="meat cuts"/>
+                  </div>
+                </CarouselItem>
+                <CarouselItem>
+                  <div className="p-1 flex justify-center">
+                    <Image src="https://placehold.co/200x200.png" alt="Placeholder image 2" width={200} height={200} className="rounded-lg" data-ai-hint="grilled steak"/>
+                  </div>
+                </CarouselItem>
+                <CarouselItem>
+                  <div className="p-1 flex justify-center">
+                    <Image src="https://placehold.co/200x200.png" alt="Placeholder image 3" width={200} height={200} className="rounded-lg" data-ai-hint="raw meat"/>
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 <Button variant="outline" onClick={handlePlayAgain}>Play Again</Button>
                 <Link href="/leaderboard" passHref>
