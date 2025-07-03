@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { ChevronsRight, LogOut, Trophy } from 'lucide-react';
 
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, collection, getCountFromServer, query, orderBy, limit, onSnapshot, updateDoc, arrayUnion, where } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, collection, getCountFromServer, query, orderBy, limit, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { app } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
@@ -405,3 +405,5 @@ export default function PrimalTapChallengePage() {
     </main>
   );
 }
+
+    
