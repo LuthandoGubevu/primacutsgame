@@ -83,8 +83,18 @@ export default function PrimalTapChallengePage() {
         if (userDocSnap.exists()) {
           setCurrentUser(user);
           setUserProfile(userDocSnap.data() as UserProfile);
+          setGameState('idle');
+        } else {
+          // This can happen if Firestore doc creation fails after signup.
+          // To prevent an inconsistent state, we sign the user out.
+          console.error("User authenticated but no profile document found. Signing out.");
+          toast({
+            variant: "destructive",
+            title: "Account Error",
+            description: "Your user profile is missing. Please sign up again.",
+          });
+          await signOut(auth);
         }
-        setGameState('idle');
       } else {
         setCurrentUser(null);
         setUserProfile(null);
@@ -93,7 +103,7 @@ export default function PrimalTapChallengePage() {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [auth, db]);
+  }, [auth, db, toast]);
 
   // Data listeners for competitors and high score
   useEffect(() => {
@@ -259,10 +269,11 @@ export default function PrimalTapChallengePage() {
         setCompetitors(c => c + 1);
         // onAuthStateChanged will handle UI changes
       } catch (error: any) {
+        console.error("Signup failed:", error);
         if (error.code === 'auth/email-already-in-use') {
           toast({ variant: "destructive", title: "Signup Failed", description: "An account with this email already exists." });
         } else {
-          toast({ variant: "destructive", title: "Signup Failed", description: "An unexpected error occurred." });
+          toast({ variant: "destructive", title: "Signup Failed", description: "An unexpected error occurred. Please try again." });
         }
       }
     }
@@ -410,5 +421,3 @@ export default function PrimalTapChallengePage() {
     </main>
   );
 }
-
-    
