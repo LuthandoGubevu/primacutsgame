@@ -9,21 +9,33 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ChevronsRight, LogOut, Trophy } from 'lucide-react';
 
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc, collection, getCountFromServer, query, orderBy, limit, onSnapshot, updateDoc, arrayUnion, where } from "firebase/firestore";
+import { app } from '@/lib/firebase';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 // Schema for the auth form
 const authSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required." }),
+  firstName: z.string().min(1, { message: "First name is required." }).optional(),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 type AuthFormValues = z.infer<typeof authSchema>;
 
-type User = AuthFormValues & { scores: number[] };
+type UserProfile = {
+  firstName: string;
+  email: string;
+  bestScore: number;
+  scores: number[];
+};
+
 type HighScore = { score: number; name: string };
 
 const GAME_DURATION = 30; // seconds
@@ -35,12 +47,17 @@ export default function PrimalTapChallengePage() {
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [iconPosition, setIconPosition] = useState({ top: 50, left: 50, visible: false });
   
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [competitors, setCompetitors] = useState(0);
   const [highScore, setHighScore] = useState<HighScore | null>(null);
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const { toast } = useToast();
+
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
   const iconTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const gameLoopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -56,31 +73,55 @@ export default function PrimalTapChallengePage() {
     },
   });
 
-  // Load data from localStorage on initial mount
+  // Auth state listener
   useEffect(() => {
-    try {
-      const storedUsers = JSON.parse(localStorage.getItem('primal-tap-users') || '[]');
-      const storedHighScore = JSON.parse(localStorage.getItem('primal-tap-highScore') || 'null');
-      const storedUserEmail = localStorage.getItem('primal-tap-currentUser');
-
-      setCompetitors(storedUsers.length);
-      setHighScore(storedHighScore);
-
-      if (storedUserEmail) {
-        const user = storedUsers.find((u: User) => u.email === storedUserEmail);
-        if (user) {
+    setLoading(true);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
           setCurrentUser(user);
-          setGameState('idle');
+          setUserProfile(userDocSnap.data() as UserProfile);
         }
+        setGameState('idle');
+      } else {
+        setCurrentUser(null);
+        setUserProfile(null);
+        setGameState('auth');
       }
-    } catch (error) {
-        console.error("Failed to parse localStorage data:", error);
-        // Clear potentially corrupted data
-        localStorage.removeItem('primal-tap-users');
-        localStorage.removeItem('primal-tap-highScore');
-        localStorage.removeItem('primal-tap-currentUser');
-    }
-  }, []);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [auth, db]);
+
+  // Data listeners for competitors and high score
+  useEffect(() => {
+    const usersCollection = collection(db, "users");
+
+    // Get initial competitor count
+    getCountFromServer(usersCollection).then(snapshot => {
+      setCompetitors(snapshot.data().count);
+    });
+
+    // High Score listener
+    const highScoreQuery = query(usersCollection, orderBy("bestScore", "desc"), limit(1));
+    const unsubscribeHighScore = onSnapshot(highScoreQuery, (querySnapshot) => {
+      if (!querySnapshot.empty) {
+        const topPlayer = querySnapshot.docs[0].data() as UserProfile;
+        if (topPlayer.bestScore > 0) {
+          setHighScore({ score: topPlayer.bestScore, name: topPlayer.firstName });
+        } else {
+          setHighScore(null);
+        }
+      } else {
+        setHighScore(null);
+      }
+    });
+
+    return () => unsubscribeHighScore();
+  }, [db]);
+
 
   const stopGame = useCallback(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -108,7 +149,6 @@ export default function PrimalTapChallengePage() {
     }, 300 + Math.random() * 1000);
   }, []);
   
-  // Game loop management
   useEffect(() => {
     if (gameState === 'playing') {
       setTimeLeft(GAME_DURATION);
@@ -130,30 +170,33 @@ export default function PrimalTapChallengePage() {
     return () => stopGame();
   }, [gameState, showNextIcon, stopGame]);
 
-  // Score saving logic
+  // Score saving logic with Firebase
   useEffect(() => {
-    if (gameState === 'gameOver' && currentUser) {
-      // Save score for current user
-      const users: User[] = JSON.parse(localStorage.getItem('primal-tap-users') || '[]');
-      const userIndex = users.findIndex(u => u.email === currentUser.email);
-      if (userIndex !== -1) {
-        users[userIndex].scores.push(score);
-        localStorage.setItem('primal-tap-users', JSON.stringify(users));
-      }
+    if (gameState === 'gameOver' && currentUser && userProfile) {
+      const saveScore = async () => {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          
+          await updateDoc(userDocRef, {
+              scores: arrayUnion(score)
+          });
 
-      // Check for new high score
-      const currentHighScore: HighScore | null = JSON.parse(localStorage.getItem('primal-tap-highScore') || 'null');
-      if (!currentHighScore || score > currentHighScore.score) {
-        const newHighScore = { score, name: currentUser.firstName };
-        localStorage.setItem('primal-tap-highScore', JSON.stringify(newHighScore));
-        setHighScore(newHighScore);
-        toast({
-            title: "🏆 New High Score!",
-            description: `Congratulations, ${currentUser.firstName}! You've set a new record!`,
-        });
+          if (score > userProfile.bestScore) {
+              await updateDoc(userDocRef, {
+                  bestScore: score
+              });
+              setUserProfile(p => p ? { ...p, bestScore: score } : null);
+              toast({
+                  title: "🏆 New Personal Best!",
+                  description: `Congratulations, ${userProfile.firstName}! You've set a new personal record!`,
+              });
+          }
       }
+      saveScore().catch(error => {
+          console.error("Error saving score: ", error);
+          toast({ variant: "destructive", title: "Error", description: "Could not save your score." });
+      });
     }
-  }, [gameState, score, currentUser, toast]);
+  }, [gameState, score, currentUser, userProfile, db, toast]);
 
 
   const handleIconClick = useCallback(() => {
@@ -167,41 +210,57 @@ export default function PrimalTapChallengePage() {
   
   const handlePlayAgain = useCallback(() => setGameState('playing'), []);
   
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('primal-tap-currentUser');
-    setCurrentUser(null);
-    setGameState('auth');
+  const handleLogout = useCallback(async () => {
+    await signOut(auth);
     form.reset();
-  }, [form]);
+  }, [auth, form]);
 
-  const onAuthSubmit: SubmitHandler<AuthFormValues> = (data) => {
-    const users: User[] = JSON.parse(localStorage.getItem('primal-tap-users') || '[]');
-    const existingUser = users.find(u => u.email === data.email);
-
+  const onAuthSubmit: SubmitHandler<AuthFormValues> = async (data) => {
     if (isLogin) {
-      if (existingUser && existingUser.password === data.password) {
-        setCurrentUser(existingUser);
-        localStorage.setItem('primal-tap-currentUser', existingUser.email);
-        setGameState('idle');
-      } else {
+      try {
+        await signInWithEmailAndPassword(auth, data.email, data.password);
+        // onAuthStateChanged will handle UI changes
+      } catch (error) {
         toast({ variant: "destructive", title: "Login Failed", description: "Invalid email or password." });
       }
     } else { // Signup
-      if (existingUser) {
-        toast({ variant: "destructive", title: "Signup Failed", description: "An account with this email already exists." });
-      } else {
-        const newUser: User = { ...data, scores: [] };
-        users.push(newUser);
-        localStorage.setItem('primal-tap-users', JSON.stringify(users));
-        localStorage.setItem('primal-tap-currentUser', newUser.email);
-        setCurrentUser(newUser);
-        setCompetitors(users.length);
-        setGameState('idle');
+      if (!data.firstName) {
+        form.setError("firstName", { type: "manual", message: "First name is required." });
+        return;
+      }
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const newUser = userCredential.user;
+        const newUserProfile: UserProfile = {
+          firstName: data.firstName,
+          email: data.email,
+          scores: [],
+          bestScore: 0,
+        };
+        await setDoc(doc(db, "users", newUser.uid), newUserProfile);
+        setCompetitors(c => c + 1);
+        // onAuthStateChanged will handle UI changes
+      } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+          toast({ variant: "destructive", title: "Signup Failed", description: "An account with this email already exists." });
+        } else {
+          toast({ variant: "destructive", title: "Signup Failed", description: "An unexpected error occurred." });
+        }
       }
     }
   };
 
   const renderGameContent = () => {
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+                <Skeleton className="w-[150px] h-[150px] rounded-full mb-4" />
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-6 w-32" />
+            </div>
+        )
+    }
+
     switch (gameState) {
       case 'auth':
         return (
@@ -240,7 +299,9 @@ export default function PrimalTapChallengePage() {
                                 <FormMessage />
                             </FormItem>
                         )}/>
-                        <Button type="submit" className="w-full font-bold" size="lg">{isLogin ? 'Log In' : 'Sign Up'}</Button>
+                        <Button type="submit" className="w-full font-bold" size="lg" disabled={form.formState.isSubmitting}>
+                            {form.formState.isSubmitting ? 'Processing...' : isLogin ? 'Log In' : 'Sign Up'}
+                        </Button>
                     </form>
                 </Form>
                 <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="mt-4 text-primary">
@@ -294,7 +355,7 @@ export default function PrimalTapChallengePage() {
               <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={300} height={300} className="mx-auto mb-4" data-ai-hint="logo emblem" />
               <CardTitle className="text-3xl md:text-4xl font-headline text-primary">Primal Cuts Tap Challenge</CardTitle>
               <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
-                Welcome back, {currentUser?.firstName}! Tap the meat sticks as they appear. You have 30 seconds.
+                Welcome back, {userProfile?.firstName}! Tap the meat sticks as they appear. You have 30 seconds.
               </CardDescription>
             </div>
             
@@ -323,11 +384,12 @@ export default function PrimalTapChallengePage() {
 
   return (
     <main className="h-screen w-full bg-background flex items-stretch justify-center p-0 font-body">
-      <Card className="w-full max-w-2xl shadow-2xl border-0 sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:h-[90vh] sm:max-h-[800px]">
+      <div className="w-full max-w-2xl shadow-2xl border-0 sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:my-auto sm:max-h-[800px]">
         <CardContent className="p-4 sm:p-6 flex-grow flex flex-col justify-center">
           {renderGameContent()}
         </CardContent>
-      </Card>
+      </div>
     </main>
   );
 }
+

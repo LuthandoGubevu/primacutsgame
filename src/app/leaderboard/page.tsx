@@ -7,13 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Crown } from 'lucide-react';
+import { getFirestore, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// This should ideally be a shared type
-type User = {
+type UserProfile = {
   firstName: string;
-  scores: number[];
-  email: string;
-  password?: string;
+  bestScore: number;
 };
 
 type LeaderboardEntry = {
@@ -23,22 +23,31 @@ type LeaderboardEntry = {
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUsers: User[] = JSON.parse(localStorage.getItem('primal-tap-users') || '[]');
-      const processedScores = storedUsers
-        .map(user => ({
-          name: user.firstName,
-          bestScore: user.scores.length > 0 ? Math.max(...user.scores) : 0,
-        }))
-        .filter(user => user.bestScore > 0) // Only show users who have played
-        .sort((a, b) => b.bestScore - a.bestScore);
-      
-      setLeaderboard(processedScores);
-    } catch (error) {
-      console.error("Failed to load or process leaderboard data:", error);
-    }
+    const fetchLeaderboard = async () => {
+        setLoading(true);
+        try {
+            const db = getFirestore(app);
+            const usersCollection = collection(db, "users");
+            const q = query(usersCollection, where("bestScore", ">", 0), orderBy("bestScore", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            const processedScores = querySnapshot.docs.map(doc => {
+                const data = doc.data() as UserProfile;
+                return {
+                    name: data.firstName,
+                    bestScore: data.bestScore
+                };
+            });
+            setLeaderboard(processedScores);
+        } catch (error) {
+            console.error("Failed to load leaderboard data:", error);
+        }
+        setLoading(false);
+    };
+    fetchLeaderboard();
   }, []);
 
   return (
@@ -49,34 +58,43 @@ export default function LeaderboardPage() {
           <CardDescription>See who is the top tapper!</CardDescription>
         </CardHeader>
         <CardContent className="flex-grow overflow-y-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px] text-center">Rank</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-right">Best Score</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {leaderboard.length > 0 ? (
-                leaderboard.map((entry, index) => (
-                  <TableRow key={index} className={index === 0 ? 'bg-primary/10' : ''}>
-                    <TableCell className="font-bold text-center text-lg">
-                        {index === 0 ? <Crown className="w-6 h-6 mx-auto text-primary" /> : index + 1}
-                    </TableCell>
-                    <TableCell className="font-medium">{entry.name}</TableCell>
-                    <TableCell className="text-right font-bold text-lg text-primary">{entry.bestScore}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-10">
-                    No scores recorded yet. Be the first to play!
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+            {loading ? (
+                <div className="space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                </div>
+            ) : (
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[50px] text-center">Rank</TableHead>
+                        <TableHead>Player</TableHead>
+                        <TableHead className="text-right">Best Score</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {leaderboard.length > 0 ? (
+                        leaderboard.map((entry, index) => (
+                        <TableRow key={index} className={index === 0 ? 'bg-primary/10' : ''}>
+                            <TableCell className="font-bold text-center text-lg">
+                                {index === 0 ? <Crown className="w-6 h-6 mx-auto text-primary" /> : index + 1}
+                            </TableCell>
+                            <TableCell className="font-medium">{entry.name}</TableCell>
+                            <TableCell className="text-right font-bold text-lg text-primary">{entry.bestScore}</TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-10">
+                            No scores recorded yet. Be the first to play!
+                        </TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+            )}
         </CardContent>
         <div className="p-6 border-t border-primary/10">
             <Link href="/" passHref>
