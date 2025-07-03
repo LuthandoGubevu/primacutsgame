@@ -379,17 +379,17 @@ export default function PrimalTapChallengePage() {
               <CarouselContent>
                 <CarouselItem>
                   <div className="p-1 flex justify-center">
-                    <Image src="https://placehold.co/200x200.png" alt="Placeholder image 1" width={200} height={200} className="rounded-lg" data-ai-hint="meat cuts"/>
+                    <Image src="/biltong-1.png" alt="Biltong product shot 1" width={200} height={200} className="rounded-lg" />
                   </div>
                 </CarouselItem>
                 <CarouselItem>
                   <div className="p-1 flex justify-center">
-                    <Image src="https://placehold.co/200x200.png" alt="Placeholder image 2" width={200} height={200} className="rounded-lg" data-ai-hint="grilled steak"/>
+                    <Image src="/biltong-2.png" alt="Biltong product shot 2" width={200} height={200} className="rounded-lg" />
                   </div>
                 </CarouselItem>
                 <CarouselItem>
                   <div className="p-1 flex justify-center">
-                    <Image src="https://placehold.co/200x200.png" alt="Placeholder image 3" width={200} height={200} className="rounded-lg" data-ai-hint="raw meat"/>
+                    <Image src="/biltong-3.png" alt="Biltong product shot 3" width={200} height={200} className="rounded-lg" />
                   </div>
                 </CarouselItem>
               </CarouselContent>
