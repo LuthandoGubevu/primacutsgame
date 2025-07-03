@@ -249,6 +249,7 @@ export default function PrimalTapChallengePage() {
         await signInWithEmailAndPassword(auth, data.email, data.password);
         // onAuthStateChanged will handle UI changes
       } catch (error) {
+        console.error("Login failed:", error);
         toast({ variant: "destructive", title: "Login Failed", description: "Invalid email or password." });
       }
     } else { // Signup
