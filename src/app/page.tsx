@@ -104,6 +104,11 @@ export default function PrimalTapChallengePage() {
       setCompetitors(snapshot.data().count);
     }).catch(error => {
       console.error("Failed to get competitor count:", error);
+      toast({
+        variant: "destructive",
+        title: "Database Error",
+        description: "Could not load competitor count. Your Firestore security rules may be too restrictive.",
+      });
     });
 
     // High Score listener

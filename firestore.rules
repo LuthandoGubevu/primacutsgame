@@ -4,19 +4,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      // Allow public read access for the leaderboard, high score display,
-      // and competitor count.
+      // Allow anyone to read user data for the leaderboard and high score display.
+      // This is necessary so that even logged-out users can see this info.
+      // For a production app, you might separate public data (name, score) 
+      // from private data (email) into different collections.
       allow read: if true;
 
-      // A user can create their own profile document when they sign up.
-      // Their authentication UID must match the document ID they are creating.
-      allow create: if request.auth.uid == userId;
+      // Allow authenticated users to create their own user document upon signup.
+      allow create: if request.auth != null && request.auth.uid == userId;
 
-      // A logged-in user can update their own profile to save new scores.
-      allow update: if request.auth.uid == userId;
-
-      // To protect user data, deleting documents from the app is not allowed.
-      allow delete: if false;
+      // Allow users to update only their own document (e.g., to add new scores).
+      allow update: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
