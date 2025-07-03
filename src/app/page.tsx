@@ -410,7 +410,7 @@ export default function PrimalTapChallengePage() {
       case 'idle':
       default:
         return (
-          <div className="text-center py-10 flex flex-col justify-between h-full">
+          <div className="text-center py-10 flex flex-col justify-center items-center h-full gap-16">
             <div className="absolute top-4 right-4">
                 <Button variant="ghost" size="sm" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log Out</Button>
             </div>
