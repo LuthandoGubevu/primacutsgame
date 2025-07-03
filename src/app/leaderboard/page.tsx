@@ -10,6 +10,7 @@ import { ArrowLeft, Crown } from 'lucide-react';
 import { getFirestore, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 type UserProfile = {
   firstName: string;
@@ -24,6 +25,7 @@ type LeaderboardEntry = {
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -44,11 +46,16 @@ export default function LeaderboardPage() {
             setLeaderboard(processedScores);
         } catch (error) {
             console.error("Failed to load leaderboard data:", error);
+            toast({
+                variant: "destructive",
+                title: "Database Error",
+                description: "Could not load leaderboard. Your Firestore security rules may be too restrictive.",
+            });
         }
         setLoading(false);
     };
     fetchLeaderboard();
-  }, []);
+  }, [toast]);
 
   return (
     <main className="h-screen w-full bg-background flex items-center justify-center p-4 font-body">

@@ -102,25 +102,38 @@ export default function PrimalTapChallengePage() {
     // Get initial competitor count
     getCountFromServer(usersCollection).then(snapshot => {
       setCompetitors(snapshot.data().count);
+    }).catch(error => {
+      console.error("Failed to get competitor count:", error);
     });
 
     // High Score listener
     const highScoreQuery = query(usersCollection, orderBy("bestScore", "desc"), limit(1));
-    const unsubscribeHighScore = onSnapshot(highScoreQuery, (querySnapshot) => {
-      if (!querySnapshot.empty) {
-        const topPlayer = querySnapshot.docs[0].data() as UserProfile;
-        if (topPlayer.bestScore > 0) {
-          setHighScore({ score: topPlayer.bestScore, name: topPlayer.firstName });
+    const unsubscribeHighScore = onSnapshot(highScoreQuery, 
+      (querySnapshot) => { // onNext
+        if (!querySnapshot.empty) {
+          const topPlayer = querySnapshot.docs[0].data() as UserProfile;
+          if (topPlayer.bestScore > 0) {
+            setHighScore({ score: topPlayer.bestScore, name: topPlayer.firstName });
+          } else {
+            setHighScore(null);
+          }
         } else {
           setHighScore(null);
         }
-      } else {
+      },
+      (error) => { // onError
+        console.error("High score listener error:", error);
+        toast({
+          variant: "destructive",
+          title: "Database Error",
+          description: "Could not load high score. Your Firestore security rules may be too restrictive.",
+        });
         setHighScore(null);
       }
-    });
+    );
 
     return () => unsubscribeHighScore();
-  }, [db]);
+  }, [db, toast]);
 
 
   const stopGame = useCallback(() => {
@@ -383,8 +396,8 @@ export default function PrimalTapChallengePage() {
   };
 
   return (
-    <main className="h-screen w-full bg-background flex items-stretch justify-center p-0 font-body">
-      <div className="w-full max-w-2xl shadow-2xl border-0 sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:my-auto sm:max-h-[800px]">
+    <main className="h-screen w-full bg-background flex items-stretch justify-center p-0 sm:p-4 font-body">
+      <div className="w-full max-w-2xl shadow-2xl border-0 sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:my-auto sm:h-[800px]">
         <CardContent className="p-4 sm:p-6 flex-grow flex flex-col justify-center">
           {renderGameContent()}
         </CardContent>
@@ -392,4 +405,3 @@ export default function PrimalTapChallengePage() {
     </main>
   );
 }
-
