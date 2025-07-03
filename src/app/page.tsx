@@ -271,10 +271,18 @@ export default function PrimalTapChallengePage() {
         // onAuthStateChanged will handle UI changes
       } catch (error: any) {
         console.error("Signup failed:", error);
-        if (error.code === 'auth/email-already-in-use') {
-          toast({ variant: "destructive", title: "Signup Failed", description: "An account with this email already exists." });
+        if (error?.code === 'auth/email-already-in-use') {
+          toast({
+            variant: "destructive",
+            title: "Signup Failed",
+            description: "An account with this email already exists.",
+          });
         } else {
-          toast({ variant: "destructive", title: "Signup Failed", description: "An unexpected error occurred. Please try again." });
+          toast({
+            variant: "destructive",
+            title: "Signup Failed",
+            description: "An unexpected error occurred. Please try again.",
+          });
         }
       }
     }
