@@ -248,9 +248,9 @@ export default function PrimalTapChallengePage() {
       try {
         await signInWithEmailAndPassword(auth, data.email, data.password);
         // onAuthStateChanged will handle UI changes
-      } catch (error) {
+      } catch (error: any) {
         console.error("Login failed:", error);
-        toast({ variant: "destructive", title: "Login Failed", description: "Invalid email or password." });
+        toast({ variant: "destructive", title: "Login Failed", description: error?.message || "Invalid email or password." });
       }
     } else { // Signup
       if (!data.firstName) {
@@ -349,11 +349,6 @@ export default function PrimalTapChallengePage() {
         )
       case 'playing':
         return (
-          <>
-            <div className="absolute top-4 left-4 right-4 flex justify-between items-center text-primary font-bold p-2 bg-background/80 rounded-md z-10 font-headline">
-              <span className="text-2xl md:text-3xl">Time: {timeLeft}s</span>
-              <span className="text-2xl md:text-3xl">Score: {score}</span>
-            </div>
             <div className="relative w-full bg-accent/20 rounded-lg overflow-hidden flex-grow" ref={gameAreaRef}>
               {iconPosition.visible && (
                   <button
@@ -366,7 +361,6 @@ export default function PrimalTapChallengePage() {
                   </button>
                 )}
             </div>
-          </>
         );
       case 'gameOver':
         return (
@@ -423,6 +417,12 @@ export default function PrimalTapChallengePage() {
   return (
     <main className="h-screen w-full bg-background flex items-stretch justify-center p-0 sm:p-4 font-body">
       <div className="w-full max-w-2xl shadow-2xl border-0 sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:my-auto sm:h-[800px]">
+        {gameState === 'playing' && (
+            <div className="flex justify-between items-center text-primary font-bold p-4 font-headline border-b border-primary/10">
+              <span className="text-2xl md:text-3xl">Time: {timeLeft}s</span>
+              <span className="text-2xl md:text-3xl">Score: {score}</span>
+            </div>
+        )}
         <CardContent className="p-4 sm:p-6 flex-grow flex flex-col justify-center">
           {renderGameContent()}
         </CardContent>
