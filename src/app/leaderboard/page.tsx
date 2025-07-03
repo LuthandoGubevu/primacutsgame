@@ -58,8 +58,8 @@ export default function LeaderboardPage() {
   }, [toast]);
 
   return (
-    <main className="h-screen w-full bg-background flex items-center justify-center p-4 font-body">
-      <Card className="w-full max-w-2xl shadow-2xl border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:h-auto sm:max-h-[90vh]">
+    <main className="min-h-screen w-full bg-background flex items-center justify-center p-4 font-body">
+      <Card className="w-full max-w-2xl shadow-2xl border-2 border-primary/10 flex flex-col h-[90vh] max-h-[800px] overflow-hidden">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl md:text-4xl font-headline text-primary">Leaderboard</CardTitle>
           <CardDescription>See who is the top tapper!</CardDescription>

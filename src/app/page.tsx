@@ -446,8 +446,8 @@ export default function PrimalTapChallengePage() {
   };
 
   return (
-    <main className="h-screen w-full bg-background flex items-stretch justify-center p-0 sm:p-4 font-body">
-      <div className="w-full max-w-2xl shadow-2xl border-0 sm:border-2 border-primary/10 relative overflow-hidden flex flex-col sm:rounded-lg h-full sm:my-auto sm:h-[800px]">
+    <main className="min-h-screen w-full bg-background flex items-center justify-center p-4 font-body">
+      <Card className="w-full max-w-2xl flex flex-col h-[90vh] max-h-[800px] overflow-hidden shadow-2xl border-primary/10">
         {gameState === 'playing' && (
             <div className="flex justify-between items-center text-primary font-bold p-4 font-headline border-b border-primary/10">
               <span className="text-2xl md:text-3xl">Time: {timeLeft}s</span>
@@ -457,7 +457,7 @@ export default function PrimalTapChallengePage() {
         <CardContent className="p-4 sm:p-6 flex-grow flex flex-col justify-center">
           {renderGameContent()}
         </CardContent>
-      </div>
+      </Card>
     </main>
   );
 }
