@@ -30,7 +30,7 @@ import {
 
 // Schema for the auth form
 const authSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required." }).optional(),
+  firstName: z.string().optional(),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
@@ -410,13 +410,13 @@ export default function PrimalTapChallengePage() {
       case 'idle':
       default:
         return (
-          <div className="text-center py-10 flex flex-col justify-center items-center h-full gap-16">
+          <div className="text-center py-10 flex flex-col justify-center items-center h-full gap-8">
             <div className="absolute top-4 right-4">
                 <Button variant="ghost" size="sm" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log Out</Button>
             </div>
             <div>
               <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={300} height={300} className="mx-auto mb-4" data-ai-hint="logo emblem" />
-              <CardTitle className="text-2xl md:text-3xl font-headline text-primary">Primal Cuts Tap Challenge</CardTitle>
+              <CardTitle className="text-2xl md:text-3xl font-headline text-primary">Primal Tap Challenge</CardTitle>
               <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
                 Welcome back, {userProfile?.firstName}! Tap the meat sticks as they appear. You have 30 seconds.
               </CardDescription>
