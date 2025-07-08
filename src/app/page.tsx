@@ -46,7 +46,6 @@ type UserProfile = {
 type HighScore = { score: number; name: string };
 
 const GAME_DURATION = 30; // seconds
-const ICON_TIMEOUT = 800; // ms
 const BONUS_ICON_TIMEOUT = 1000; // ms
 const BONUS_POINTS = 5;
 
@@ -56,6 +55,7 @@ export default function PrimalTapChallengePage() {
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [iconPosition, setIconPosition] = useState({ top: 50, left: 50, visible: false });
   const [bonusIcon, setBonusIcon] = useState({ top: 50, left: 50, visible: false, key: 0 });
+  const [iconTimeoutDuration, setIconTimeoutDuration] = useState(800);
   
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -83,7 +83,14 @@ export default function PrimalTapChallengePage() {
       email: '',
       password: '',
     },
+    mode: 'onChange',
   });
+
+  // Set game speed based on device
+  useEffect(() => {
+    const isMobileDevice = /Mobi|Android/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
+    setIconTimeoutDuration(isMobileDevice ? 1000 : 600);
+  }, []);
 
   // Auth state listener
   useEffect(() => {
@@ -185,10 +192,10 @@ export default function PrimalTapChallengePage() {
         iconTimeoutRef.current = setTimeout(() => {
           setIconPosition(p => ({ ...p, visible: false }));
           showNextIcon();
-        }, ICON_TIMEOUT);
+        }, iconTimeoutDuration);
       }
     }, 300 + Math.random() * 1000);
-  }, []);
+  }, [iconTimeoutDuration]);
 
   const showBonusIcon = useCallback(() => {
     if (gameAreaRef.current) {
@@ -318,7 +325,7 @@ export default function PrimalTapChallengePage() {
         setCompetitors(c => c + 1);
       } catch (error: any) {
         console.error("Signup failed:", error);
-        if (error?.code === 'auth/email-already-in-use') {
+        if (error instanceof Error && (error as any).code === 'auth/email-already-in-use') {
           toast({
             variant: "destructive",
             title: "Signup Failed",
@@ -359,7 +366,7 @@ export default function PrimalTapChallengePage() {
                            <FormField
                             control={form.control}
                             name="firstName"
-                            rules={{ required: !isLogin || 'First name is required for sign up.' }}
+                            rules={{ required: !isLogin && 'First name is required for sign up.' }}
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel className="sr-only">First Name</FormLabel>
