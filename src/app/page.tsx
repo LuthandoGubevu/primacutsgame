@@ -47,12 +47,15 @@ type HighScore = { score: number; name: string };
 
 const GAME_DURATION = 30; // seconds
 const ICON_TIMEOUT = 800; // ms
+const BONUS_ICON_TIMEOUT = 1000; // ms
+const BONUS_POINTS = 5;
 
 export default function PrimalTapChallengePage() {
   const [gameState, setGameState] = useState<'auth' | 'idle' | 'playing' | 'gameOver'>('auth');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [iconPosition, setIconPosition] = useState({ top: 50, left: 50, visible: false });
+  const [bonusIcon, setBonusIcon] = useState({ top: 50, left: 50, visible: false, key: 0 });
   
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -70,6 +73,8 @@ export default function PrimalTapChallengePage() {
   const gameLoopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
+  const bonusScheduleTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const bonusIconTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
@@ -92,8 +97,6 @@ export default function PrimalTapChallengePage() {
           setUserProfile(userDocSnap.data() as UserProfile);
           setGameState('idle');
         } else {
-          // This can happen if Firestore doc creation fails after signup.
-          // To prevent an inconsistent state, we sign the user out.
           console.error("User authenticated but no profile document found. Signing out.");
           toast({
             variant: "destructive",
@@ -116,7 +119,6 @@ export default function PrimalTapChallengePage() {
   useEffect(() => {
     const usersCollection = collection(db, "users");
 
-    // Get initial competitor count
     getCountFromServer(usersCollection).then(snapshot => {
       setCompetitors(snapshot.data().count);
     }).catch(error => {
@@ -128,10 +130,9 @@ export default function PrimalTapChallengePage() {
       });
     });
 
-    // High Score listener
     const highScoreQuery = query(usersCollection, orderBy("bestScore", "desc"), limit(1));
     const unsubscribeHighScore = onSnapshot(highScoreQuery, 
-      (querySnapshot) => { // onNext
+      (querySnapshot) => {
         if (!querySnapshot.empty) {
           const topPlayer = querySnapshot.docs[0].data() as UserProfile;
           if (topPlayer.bestScore > 0) {
@@ -143,7 +144,7 @@ export default function PrimalTapChallengePage() {
           setHighScore(null);
         }
       },
-      (error) => { // onError
+      (error) => {
         console.error("High score listener error:", error);
         toast({
           variant: "destructive",
@@ -162,7 +163,12 @@ export default function PrimalTapChallengePage() {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (iconTimeoutRef.current) clearTimeout(iconTimeoutRef.current);
     if (gameLoopTimeoutRef.current) clearTimeout(gameLoopTimeoutRef.current);
+    if (bonusIconTimeoutRef.current) clearTimeout(bonusIconTimeoutRef.current);
+    bonusScheduleTimeoutsRef.current.forEach(clearTimeout);
+    bonusScheduleTimeoutsRef.current = [];
+
     setIconPosition(p => ({ ...p, visible: false }));
+    setBonusIcon(b => ({ ...b, visible: false }));
   }, []);
 
   const showNextIcon = useCallback(() => {
@@ -183,12 +189,42 @@ export default function PrimalTapChallengePage() {
       }
     }, 300 + Math.random() * 1000);
   }, []);
+
+  const showBonusIcon = useCallback(() => {
+    if (gameAreaRef.current) {
+      const gameArea = gameAreaRef.current.getBoundingClientRect();
+      const top = Math.random() * (gameArea.height - 100);
+      const left = Math.random() * (gameArea.width - 100);
+      
+      setBonusIcon({ top, left, visible: true, key: Date.now() });
+
+      if (bonusIconTimeoutRef.current) clearTimeout(bonusIconTimeoutRef.current);
+      bonusIconTimeoutRef.current = setTimeout(() => {
+        setBonusIcon(b => ({ ...b, visible: false }));
+      }, BONUS_ICON_TIMEOUT);
+    }
+  }, []);
+  
+  const scheduleBonusIcons = useCallback(() => {
+    bonusScheduleTimeoutsRef.current.forEach(clearTimeout);
+    bonusScheduleTimeoutsRef.current = [];
+
+    const schedule = (delay: number, variance: number) => {
+        const timeoutId = setTimeout(showBonusIcon, delay + Math.random() * variance);
+        bonusScheduleTimeoutsRef.current.push(timeoutId);
+    };
+
+    schedule(8000, 2000);  // ~8-10 seconds
+    schedule(18000, 2000); // ~18-20 seconds
+    schedule(26000, 2000); // ~26-28 seconds
+  }, [showBonusIcon]);
   
   useEffect(() => {
     if (gameState === 'playing') {
       setTimeLeft(GAME_DURATION);
       setScore(0);
       showNextIcon();
+      scheduleBonusIcons();
       
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
@@ -203,9 +239,8 @@ export default function PrimalTapChallengePage() {
       stopGame();
     }
     return () => stopGame();
-  }, [gameState, showNextIcon, stopGame]);
+  }, [gameState, showNextIcon, stopGame, scheduleBonusIcons]);
 
-  // Score saving logic with Firebase
   useEffect(() => {
     if (gameState === 'gameOver' && currentUser && userProfile) {
       const saveScore = async () => {
@@ -242,6 +277,13 @@ export default function PrimalTapChallengePage() {
     if (gameLoopTimeoutRef.current) clearTimeout(gameLoopTimeoutRef.current);
     showNextIcon();
   }, [gameState, iconPosition.visible, showNextIcon]);
+
+  const handleBonusIconClick = useCallback(() => {
+    if (!bonusIcon.visible || gameState !== 'playing') return;
+    setScore(prevScore => prevScore + BONUS_POINTS);
+    if (bonusIconTimeoutRef.current) clearTimeout(bonusIconTimeoutRef.current);
+    setBonusIcon(b => ({ ...b, visible: false }));
+  }, [gameState, bonusIcon.visible]);
   
   const handlePlayAgain = useCallback(() => setGameState('playing'), []);
   
@@ -254,12 +296,11 @@ export default function PrimalTapChallengePage() {
     if (isLogin) {
       try {
         await signInWithEmailAndPassword(auth, data.email, data.password);
-        // onAuthStateChanged will handle UI changes
       } catch (error: any) {
         console.error("Login failed:", error);
         toast({ variant: "destructive", title: "Login Failed", description: error?.message || "Invalid email or password." });
       }
-    } else { // Signup
+    } else {
       if (!data.firstName) {
         form.setError("firstName", { type: "manual", message: "First name is required." });
         return;
@@ -275,7 +316,6 @@ export default function PrimalTapChallengePage() {
         };
         await setDoc(doc(db, "users", newUser.uid), newUserProfile);
         setCompetitors(c => c + 1);
-        // onAuthStateChanged will handle UI changes
       } catch (error: any) {
         console.error("Signup failed:", error);
         if (error?.code === 'auth/email-already-in-use') {
@@ -319,6 +359,7 @@ export default function PrimalTapChallengePage() {
                            <FormField
                             control={form.control}
                             name="firstName"
+                            rules={{ required: !isLogin || 'First name is required for sign up.' }}
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel className="sr-only">First Name</FormLabel>
@@ -365,6 +406,17 @@ export default function PrimalTapChallengePage() {
                     aria-label="Tap target"
                   >
                     <Image src="/PC-Elements-15.png" alt="Primal Cuts target" width={80} height={80} className="animate-pulse hover:scale-110 transition-transform" />
+                  </button>
+                )}
+                {bonusIcon.visible && (
+                  <button
+                    key={bonusIcon.key}
+                    className="absolute focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded-full animate-in fade-in-50 scale-95 hover:scale-105 transition-transform"
+                    style={{ top: `${bonusIcon.top}px`, left: `${bonusIcon.left}px` }}
+                    onClick={handleBonusIconClick}
+                    aria-label="Bonus tap target"
+                  >
+                    <Image src="/bull.png" alt="Bonus target" width={100} height={100} />
                   </button>
                 )}
             </div>
@@ -414,12 +466,15 @@ export default function PrimalTapChallengePage() {
             <div className="absolute top-4 right-4">
                 <Button variant="ghost" size="sm" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log Out</Button>
             </div>
-            <div>
-              <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={300} height={300} className="mx-auto mb-4" data-ai-hint="logo emblem" />
-              <CardTitle className="text-2xl md:text-3xl font-headline text-primary">Primal Tap Challenge</CardTitle>
-              <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
-                Welcome back, {userProfile?.firstName}! Tap the meat sticks as they appear. You have 30 seconds.
-              </CardDescription>
+            
+            <div className='flex flex-col items-center justify-center gap-4'>
+              <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={300} height={300} className="mx-auto" data-ai-hint="logo emblem" />
+              <div className='text-center'>
+                 <CardTitle className="text-2xl md:text-3xl font-headline text-primary">Primal Tap Challenge</CardTitle>
+                <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
+                  Welcome back, {userProfile?.firstName}! Tap the meat sticks as they appear. You have 30 seconds.
+                </CardDescription>
+              </div>
             </div>
             
             <div className="space-y-4">
