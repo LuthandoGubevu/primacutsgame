@@ -477,10 +477,6 @@ export default function PrimalTapChallengePage() {
       default:
         return (
           <div className="text-center py-10 flex flex-col justify-center items-center h-full gap-8">
-            <div className="absolute top-4 right-4">
-                <Button variant="ghost" size="sm" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log Out</Button>
-            </div>
-            
             <div className='flex flex-col items-center justify-center gap-4'>
               <Image src="/PC-Elements-15.png" alt="Primal Tap Challenge Logo" width={300} height={300} className="mx-auto" data-ai-hint="logo emblem" />
               <div className='text-center'>
@@ -516,7 +512,12 @@ export default function PrimalTapChallengePage() {
 
   return (
     <main className="min-h-screen w-full bg-background flex items-center justify-center p-4 font-body">
-      <Card className="w-full max-w-2xl flex flex-col h-[90vh] max-h-[800px] overflow-hidden shadow-2xl border-primary/10">
+      <Card className="relative w-full max-w-2xl flex flex-col h-[90vh] max-h-[800px] overflow-hidden shadow-2xl border-primary/10">
+        {gameState === 'idle' && userProfile && (
+            <div className="absolute top-4 right-4 z-10">
+                <Button variant="ghost" size="sm" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log Out</Button>
+            </div>
+        )}
         {gameState === 'playing' && (
             <div className="flex justify-between items-center text-primary font-bold p-4 font-headline border-b border-primary/10">
               <span className="text-2xl md:text-3xl">Time: {timeLeft}s</span>
