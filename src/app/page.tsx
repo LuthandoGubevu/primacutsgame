@@ -488,7 +488,7 @@ export default function PrimalTapChallengePage() {
               <div className='text-center'>
                  <CardTitle className="text-2xl md:text-3xl font-headline text-primary">Primal Tap Challenge</CardTitle>
                 <CardDescription className="mt-4 text-lg text-foreground/80 max-w-md mx-auto">
-                  Tap as many horns in 30 seconds, Watch out for the WHITE bull, get 5 bonus points
+                  Tap as many horns in 30 seconds, Watch out for the WHITE bull, get 5 bonus points when you catch the bull!
                 </CardDescription>
               </div>
             </div>
