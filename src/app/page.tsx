@@ -14,7 +14,7 @@ import { getFirestore, doc, setDoc, getDoc, collection, getCountFromServer, quer
 import { app } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
@@ -411,6 +411,11 @@ export default function PrimalTapChallengePage() {
         )
       case 'playing':
         return (
+          <>
+            <CardHeader className="flex-row items-center justify-between text-primary font-bold font-headline border-b border-primary/10">
+                <span className="text-2xl md:text-3xl">Time: {timeLeft}s</span>
+                <span className="text-2xl md:text-3xl">Score: {score}</span>
+            </CardHeader>
             <div className="relative w-full bg-accent/20 rounded-lg overflow-hidden flex-grow" ref={gameAreaRef}>
               {iconPosition.visible && (
                   <button
@@ -434,6 +439,7 @@ export default function PrimalTapChallengePage() {
                   </button>
                 )}
             </div>
+          </>
         );
       case 'gameOver':
         return (
@@ -487,8 +493,8 @@ export default function PrimalTapChallengePage() {
               </div>
             </div>
             
-            <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-center">
+            <div className="space-y-4 w-full px-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
                     <div className="bg-background/50 p-4 rounded-lg">
                         <p className="text-sm text-muted-foreground">Competitors</p>
                         <p className="text-2xl font-bold text-primary">{competitors}</p>
@@ -518,13 +524,7 @@ export default function PrimalTapChallengePage() {
                 <Button variant="ghost" size="sm" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/>Log Out</Button>
             </div>
         )}
-        {gameState === 'playing' && (
-            <div className="flex justify-between items-center text-primary font-bold p-4 font-headline border-b border-primary/10">
-              <span className="text-2xl md:text-3xl">Time: {timeLeft}s</span>
-              <span className="text-2xl md:text-3xl">Score: {score}</span>
-            </div>
-        )}
-        <CardContent className="p-4 sm:p-6 flex-grow flex flex-col justify-center">
+        <CardContent className="p-0 sm:p-0 flex-grow flex flex-col justify-center">
           {renderGameContent()}
         </CardContent>
       </Card>
