@@ -56,6 +56,7 @@ export default function PrimalTapChallengePage() {
   const [iconPosition, setIconPosition] = useState({ top: 50, left: 50, visible: false });
   const [bonusIcon, setBonusIcon] = useState({ top: 50, left: 50, visible: false, key: 0 });
   const [iconTimeoutDuration, setIconTimeoutDuration] = useState(800);
+  const [spawnInterval, setSpawnInterval] = useState(600);
   
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -89,7 +90,13 @@ export default function PrimalTapChallengePage() {
   // Set game speed based on device
   useEffect(() => {
     const isMobileDevice = /Mobi|Android/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
-    setIconTimeoutDuration(isMobileDevice ? 1000 : 600);
+    if (isMobileDevice) {
+      setIconTimeoutDuration(1000);
+      setSpawnInterval(1000);
+    } else {
+      setIconTimeoutDuration(600);
+      setSpawnInterval(600);
+    }
   }, []);
 
   // Auth state listener
@@ -194,8 +201,8 @@ export default function PrimalTapChallengePage() {
           showNextIcon();
         }, iconTimeoutDuration);
       }
-    }, 300 + Math.random() * 1000);
-  }, [iconTimeoutDuration]);
+    }, spawnInterval);
+  }, [iconTimeoutDuration, spawnInterval]);
 
   const showBonusIcon = useCallback(() => {
     if (gameAreaRef.current) {
