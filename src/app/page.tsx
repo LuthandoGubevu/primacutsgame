@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Carousel,
   CarouselContent,
@@ -33,6 +34,7 @@ const authSchema = z.object({
   firstName: z.string().optional(),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  emailMarketingOptIn: z.boolean().optional(),
 });
 type AuthFormValues = z.infer<typeof authSchema>;
 
@@ -41,6 +43,7 @@ type UserProfile = {
   email: string;
   bestScore: number;
   scores: number[];
+  emailMarketingOptIn: boolean;
 };
 
 type HighScore = { score: number; name: string };
@@ -83,6 +86,7 @@ export default function PrimalTapChallengePage() {
       firstName: '',
       email: '',
       password: '',
+      emailMarketingOptIn: false,
     },
     mode: 'onChange',
   });
@@ -327,6 +331,7 @@ export default function PrimalTapChallengePage() {
           email: data.email,
           scores: [],
           bestScore: 0,
+          emailMarketingOptIn: !!data.emailMarketingOptIn,
         };
         await setDoc(doc(db, "users", newUser.uid), newUserProfile);
         setCompetitors(c => c + 1);
@@ -399,6 +404,30 @@ export default function PrimalTapChallengePage() {
                                 <FormMessage />
                             </FormItem>
                         )}/>
+                        {!isLogin && (
+                          <FormField
+                            control={form.control}
+                            name="emailMarketingOptIn"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 border-primary/20">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none text-left">
+                                  <FormLabel>
+                                    Keep me in the loop with deals and updates via email.
+                                  </FormLabel>
+                                  <FormDescription>
+                                    We respect your privacy. Your email will only be used for communication you’ve opted into.
+                                  </FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        )}
                         <Button type="submit" className="w-full font-bold" size="lg" disabled={form.formState.isSubmitting}>
                             {form.formState.isSubmitting ? 'Processing...' : isLogin ? 'Log In' : 'Sign Up'}
                         </Button>
