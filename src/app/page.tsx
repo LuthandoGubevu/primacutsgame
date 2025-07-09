@@ -232,9 +232,10 @@ export default function PrimalTapChallengePage() {
         bonusScheduleTimeoutsRef.current.push(timeoutId);
     };
 
-    schedule(8000, 2000);  // ~8-10 seconds
+    schedule(5000, 2000);  // ~5-7 seconds
+    schedule(11000, 2000); // ~11-13 seconds
     schedule(18000, 2000); // ~18-20 seconds
-    schedule(26000, 2000); // ~26-28 seconds
+    schedule(25000, 2000); // ~25-27 seconds
   }, [showBonusIcon]);
   
   useEffect(() => {
@@ -560,3 +561,5 @@ export default function PrimalTapChallengePage() {
     </main>
   );
 }
+
+    
